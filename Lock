@@ -1,0 +1,288 @@
+# 国际跳棋（10×10）中的“锁”：定义、分析、使用、破解与学习路径（逐条核验版）
+
+> 本文以 FMJD 官方教程（《国际跳棋教程Ⅰ/Ⅱ/Ⅲ》英文原版）、J.-P. Dubois《Dammen in de praktijk》、荷兰 Damkompas 实战案例库、Gantwarg 栅栏阵专栏为主要依据，逐条核对原文；文中引用的着法均用自写规则引擎复盘。
+
+## 阅读说明
+
+**核验方法**
+
+- **原文核对**：下载全部原始资料（FMJD 教程Ⅰ/Ⅱ/Ⅲ PDF、Dubois PDF、Damkompas 与 Gantwarg 网页），逐句检索原文。
+- **着法核对**：用自写的 10×10 规则引擎（强制吃子、多吃优先、王可长距离飞行、土耳其打击规则）把文中引用的每一条着法走一遍。
+- **Damkompas 局面批量检查**：其 349 个 FEN 局面中 332 个合法；其余 17 个为网站自身笔误或记谱残缺，本文未引用其中任何一个。
+
+**状态标记**
+
+| 标记 | 含义 |
+|---|---|
+| ✅ | 原文支持 |
+| 引擎✅ | 着法已在规则引擎上逐步走通 |
+| ⚠️ | 原说法有误或不严谨，已按原文更正 |
+| ❓ | 无法核实 |
+| 〔归纳〕 | 作者归纳，原文无此表述，已配原文依据 |
+
+**链接与缩写**
+
+- **C1** = FMJD《Course in draughts》，即《国际跳棋教程Ⅰ》，作者查林·胡德穆（Tjalling Goedemoed）。
+- **C2 / C3** = FMJD Course II / Course III 各分册。
+- **Dubois** = 《Dammen in de praktijk》。
+- 页码一律为 **PDF 页码**，链接带 `#page=N`，浏览器可直接跳转。C1 印刷页码 = PDF 页码 − 3；Dubois 印刷页码 = PDF 页码 + 1。
+- lidraughts 摆局链接均可打开并带入局面，但未逐一目测棋盘显示。
+
+---
+
+## 一、前置约定
+
+| 内容 | 状态 | 依据 |
+|---|---|---|
+| 棋盘编号 1–50。开局白方占 31–50，从下往上走；黑方占 1–20。“32-28”为走子，“28x19”为吃子，“1… 19-23”表示黑方走 | ✅ 引擎✅ | [C1 第1课 Notation p.5](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=5) |
+| 两翼：每方右翼为短翼、左翼为长翼。白方短翼在 25/30/35/40/45 一侧 | ✅ | [C1 第30课 p.119](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=119)；[Damkompas #kvo](http://wandelkoers.nl/damkoers/opsluiting.php#kvo) |
+| ~~长翼上有 46–5 大斜线~~ | ⚠️ | 不严谨：46–5 是贯穿全盘的大斜线，不专属于某一翼，已删除 |
+| 着数（temp）：手里还有几步安全可走的棋。锁的最终目的，几乎都是让对方先把着数用完 | ✅ | “deprive black of some temps”，[C1 p.98](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=98) |
+
+## 二、术语对照
+
+| 中文（标“(译)”为译名） | FMJD 英文 | 荷兰语 | 典型结构（以白方锁黑方为例） | 状态 | 依据 |
+|---|---|---|---|---|---|
+| 锁（第27课） | Lock | opsluiting / vastzetten | 一组棋子无法走动 | ✅ | [C1 p.108](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=108)；[Damkompas #vast](http://wandelkoers.nl/damkoers/vastzetten.php#vast)；中文课名见[百度百科目录](https://baike.baidu.com/item/%E5%9B%BD%E9%99%85%E8%B7%B3%E6%A3%8B%E6%95%99%E7%A8%8B%E2%85%A0/12069564) |
+| 叉子锁（第28课）/ 栅栏阵 | Fork lock | hekstelling | 白 26/27/31/36 对黑 16/18/22 | ✅ | [C1 p.112](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=112)；[Damkompas #hekstelling](http://wandelkoers.nl/damkoers/hekstelling.php#hekstelling)；[摆局](https://lidraughts.org/editor/B:W26,27,31,36:B16,18,22) |
+| 半叉 (译) | Semi-fork | halve hekstelling | 白 27/31/36（缺 26） | ✅ | [Damkompas #hekstelling](http://wandelkoers.nl/damkoers/hekstelling.php#hekstelling)；[C1 p.109](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=109) |
+| 未完成叉 (译) | Unfinished fork-lock | onvoltooide hekstelling | 白 26/27/31（缺 36） | ✅ | [Damkompas #hekstelling](http://wandelkoers.nl/damkoers/hekstelling.php#hekstelling)；[C3 Strategy p.9](https://www.fmjd.org/downloads/Course/en/Course%203/S3.Strategy.pdf#page=9)（Evert Bronstring 提出） |
+| 链子锁（第29课） | Chain lock | kettingstelling | 白 27/28/31/33 对黑 17/18/22 | ✅ | [C1 p.116](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=116)；[Dubois p.53](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=53) |
+| 右翼锁（第30课）/ 短翼锁 | Right wing lock | korte-vleugelopsluiting | 锁住一方右翼（短翼） | ✅ | [C1 p.119](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=119)；[Damkompas #kvo](http://wandelkoers.nl/damkoers/opsluiting.php#kvo) |
+| 左翼锁 / 长翼锁 (译) | Left wing lock | lange-vleugelopsluiting | 如白 25+29 锁黑方左翼 | ✅ | [C1 p.110](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=110)；[Damkompas #lvo](http://wandelkoers.nl/damkoers/opsluiting.php#lvo) |
+| 箭形锁 (译) | Arrow lock | — | 黑 16/21/26 锁白 27/31/32/36/37 | ✅ | [C1 p.110](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=110) |
+| 盖斯特姆锁 (译) | Ghestem lock | — | 对黑 16/21/26 编队走 28-22 | ✅ | [C1 p.98](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=98) |
+| 三叶草锁 (译) | — | klaverblad-opsluiting | **白 25/30/35/48** 对黑 14/19/20/24 | ⚠️ 已补 48 | [Damkompas #kla](http://wandelkoers.nl/damkoers/opsluiting.php#kla)；[摆局](https://lidraughts.org/editor/B:W25,30,35,48:B14,19,20,24) |
+| 冻结（第24课）/ 战术冻结（第25课） | Freezing out / Tactical freeze out | vastlopen / op slag | 对方无合理着法 | ✅ | [C1 p.96](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=96)、[p.100](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=100)；[Damkompas #vastlopen](http://wandelkoers.nl/damkoers/vastzetten.php#vastlopen) |
+
+**关于俄语术语 ⚠️**
+
+- “зажим / связка”出自 [Калуга 学校大纲 5.3 节“Понятия: зажим, связка”](http://shashki.kaluga.ru/about/1387)，但该大纲讲的是 **64 格俄式跳棋**，不是国际跳棋。
+- “зажим короткого / длинного фланга”在所有来源中均未找到 ❓，已删除。
+
+## 三、定义与本质
+
+1. **定义** ✅ — FMJD：“If a group of pieces can't play we call it a lock”（一组棋子走不了，就叫锁）。见 [C1 p.108](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=108)。
+2. **本质** ✅ — Dubois：“Het beperken van de speelvrijheid van de tegenstander, en zijn eigen vrijheid behouden is de basis van het positiespel”（限制对方的行动自由、同时保持自己的自由，是局面战的基础）。见 [Dubois p.34](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=34)。
+3. **以少控多 / 经济锁** ✅ — “A lock is called economic if the number of pieces locked exceeds the number of pieces involved in the lock”（被锁子数多于上锁用子数，称为经济锁）。省下的子可在另一侧形成多兵优势。见 [C2 Judging positions p.15](https://www.fmjd.org/downloads/Course/en/Course%202/S1.Judging%20positions(c).pdf#page=15)。
+4. **按强度分类**〔归纳〕：
+   - **绝对锁**：被锁的子物理上无路可走。
+   - **部分锁** ✅：被锁方还有出路。例如半叉时黑方仍可走 17-21（“partial lock”，[C1 p.109](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=109)）；箭形锁“not absolute”（[C1 p.110](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=110)）。
+   - **战术锁** ✅：Dubois 称为“固定化”（immobilisatie），即棋子能走，但走哪步都会遭组合打击。见 [Dubois p.34](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=34)。
+5. **终点是冻结** ✅ — 无子可走即负。锁本身不直接得子，要靠耗尽对方着数，或用组合手段完成冻结。见 [C1 p.96–99](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=96)。
+
+## 四、各类锁详解
+
+### 1. 叉子锁 / 栅栏阵（白 26-27-31-36；黑方镜像为 15-20-24-25）
+
+| 要点 | 状态 | 依据 |
+|---|---|---|
+| **何时有价值**：黑方占着 16/18/22 时 | ✅ | [Dubois p.61](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=61) |
+| **基础组合**：(22-28) 33x22 (17x28) 27-21 (16x27) 31x33，黑方丢子 | ⚠️ 旧版漏了强制吃子 33x22 17x28 | [Dubois p.61](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=61) |
+| 6→17、1→12 两条线上**常常**还有黑子，一并受困 | ✅（旧版“都被关住”说过头） | [Damkompas #hekstelling](http://wandelkoers.nl/damkoers/hekstelling.php#hekstelling) |
+| **使用要点**：这是静态阵型，真正的局面战在另一翼进行 | ✅ | [C1 p.114](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=114) |
+| **三项任务**：阻止对方破锁；控制中心（不让黑方长期占 23，不让其渗入 28）；保留自己右翼的有用着数 | ✅ | [Dubois p.62](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=62) |
+| **核心警句**：“In case you have a fork lock you must be able to change pieces at the other side”（下叉子锁，必须能在另一侧兑子） | ✅ | [C1 p.114](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=114) |
+| **没有价值的情况**：锁住对方要花太多子；对方稳固占据中心；对方另一翼很自由 | ✅ | [Dubois p.61](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=61) |
+| **怎样形成**：37-32 再 32-28，23x32 38x27 | ✅ | [Dubois p.63](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=63) |
+| **强行形成**：1.31-26 07-12 2.37-31 08-13 3.32-28! 23x32 38x27 | ✅ 引擎✅ | [Dubois p.64](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=64) |
+| **开局主线**：见表下 | ✅ 引擎✅ | [Gantwarg 栅栏阵专栏](http://gantwarg.net/dammen/Hekstelling/index.htm) |
+| Dubois 次序（6…14-20、7…10-14）与 Gantwarg 次序到达同一局面。10、14 两子留在长线上，双方大致平衡 | ✅ 引擎✅ | [Dubois p.64](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=64) |
+| Sijbrands：12…8-13 比 9-13 更能束缚白方 | ✅ | [Gantwarg 栅栏阵专栏](http://gantwarg.net/dammen/Hekstelling/index.htm)（出自 Sijbrands 关于 1973 年对 Andreiko 比赛的著作） |
+| **锁方组合①**：先清除 22 号子，再走 27-21 | ✅ | [Damkompas #combihek](http://wandelkoers.nl/damkoers/hekstelling.php#combihek) |
+| **锁方组合②**：31-26 22x31、27-21 17x37 | ⚠️ 出处更正为半叉页 | [Damkompas #halfhekwinalg](http://wandelkoers.nl/damkoers/halfhek.php#halfhekwinalg) |
+| **提防**对方的 chassé-croisé（交叉滑步打击）反击 | ✅ | [Damkompas #prakhektype](http://wandelkoers.nl/damkoers/hekstelling.php#prakhektype) |
+| **被锁方破解①**：白方有子在 29 时，走 17-21 或 18-23 突破 | ✅ | [Dubois p.64](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=64) |
+| **被锁方破解②**：弃 16 号子，继续 22-28 33x22 17x28 | ✅ | [Dubois p.61](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=61) |
+| **被锁方破解③**：先建坚固中心，再找叉子锁摧毁打击（如 1.37-31! 26x37 2.48-42…） | ✅ | [C1 p.114](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=114) |
+| **大师实例**：Sijbrands–Morsink | ✅ 引擎✅ | [C1 p.113](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=113) |
+| **练习与进阶** | — | 练习 [C1 p.115](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=115)；进阶 [C3 Strategy p.5](https://www.fmjd.org/downloads/Course/en/Course%203/S3.Strategy.pdf#page=5) |
+
+**开局主线全文（Gantwarg）**：1.34-29 19-23 2.40-34 14-19 3.45-40 10-14 4.50-45 5-10 5.31-26 20-25 6.37-31 15-20 7.41-37 10-15 8.46-41 4-10 9.32-28 23x32 10.37x28 19-23 11.28x19 13x24。此时黑方形成栅栏阵。
+
+### 2. 半叉（白 27-31-36）
+
+| 要点 | 状态 | 依据 |
+|---|---|---|
+| 只是部分锁：黑方可从后方走 17-21 攻击 27 号子 | ✅ | [C1 p.109](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=109)；[Damkompas #halfhekalg](http://wandelkoers.nl/damkoers/halfhek.php#halfhekalg) |
+| 白方可随时用 31-26 兑子主动解开 | ✅ | [C1 p.110](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=110) |
+| 过渡①：36/31/27 加 38-32 即成链子锁 | ✅ | [Dubois p.55](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=55) |
+| 过渡②：解开半叉、转入包围战（Gantwarg–Galkin） | ✅ | [C1 p.129](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=129) |
+| 当 17-21 会遭战术惩罚时，半叉等于一把完美的锁（“works as a perfect lock”） | ✅ | [C1 p.128](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=128) |
+| 5 种取胜组合：利用尾部 22→09 线上的空洞；27-21 16x27；31-26 22x31；27-21 17x37；利用对方从后方走子 | ✅ | [Damkompas #halfhekwinalg](http://wandelkoers.nl/damkoers/halfhek.php#halfhekwinalg) |
+| 实例分组 | — | [#prakhalf1627](http://wandelkoers.nl/damkoers/halfhek.php#prakhalf1627)、[#prakhalf2231](http://wandelkoers.nl/damkoers/halfhek.php#prakhalf2231)、[#prakhalf1737](http://wandelkoers.nl/damkoers/halfhek.php#prakhalf1737) |
+| 进阶 | — | [C3 Strategy p.2](https://www.fmjd.org/downloads/Course/en/Course%203/S3.Strategy.pdf#page=2) |
+
+### 3. 链子锁（骨架：白 27/28/31/33 锁黑 17/18/22）
+
+| 要点 | 状态 | 依据 |
+|---|---|---|
+| **数子①**：4 个子锁 3 个子“nauwelijks voordelig”（几乎不划算）。只有黑方 12、16 等子落后、一并被关住时才有利 | ✅ | [Dubois p.53](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=53) |
+| **数子②**：7 个子锁 4 个子，反而对被锁方有利 | ✅ | [Dubois p.54](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=54) |
+| 白方自己只能用 31-26 解开链条 | ✅ | [Dubois p.53](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=53) |
+| **开局陷阱**：1.32-28 18-22 2.37-32 12-18 3.41-37 7-12 4.34-29 20-24? 5.29x20 15x24 6.32-27，黑方只剩 6 个子（3/4/5/9/10/14）能走，白方 9 个 | ✅ 引擎✅ | [Dubois p.53](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=53) |
+| 另一个陷阱（黑走 13-18）；正确做法是向中心出子 12-18、7-12、1-7 | ✅ | [C1 p.116](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=116) |
+| **锁方计划①**：耗尽对方链外一翼的有用着数，白方占 25 号格往往是最狠的一着（“radicale zet”） | ✅ | [Dubois p.54](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=54) |
+| **锁方计划②**：在被锁一侧找组合，如威胁 27-21 17x37 28x06 | ✅ | [Dubois p.55](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=55) |
+| 实例：Verse 的 6.39-34!! 及其变化 | ✅ 引擎✅ | [Dubois p.56](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=56) |
+| **被锁方计划①**：用 15/20/24 编队压 33 号子，威胁 24-29 | ✅ | [Dubois p.56–57](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=56) |
+| **被锁方计划②**：限制对方右翼的着数 | ✅ | [Dubois p.56–57](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=56) |
+| 用 10/14/19 编队拔掉 28 号子（Lewina–Wanders）；每步突破都要先算战术，如黑走 19-23 会遭 25-20! | ⚠️ 出处更正为 C1，非 Dubois | [C1 p.116](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=116)、[p.108](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=108) |
+| **反转**：破开对方的链，同时把对方锁住：1.34-29! 23x34 2.40x20 15x24 3.32-27! | ✅ | [C1 p.117](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=117) |
+| **吃子方向**：古典型局面通常向后吃以保留着数，但链子锁中建议向前吃 | ✅ | [C1 p.117](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=117) |
+| **典型组合**：脚跟打击（hielslag） | ✅ | [Damkompas #prakkethiel](http://wandelkoers.nl/damkoers/ketting.php#prakkethiel)、[#hielket38](http://wandelkoers.nl/damkoers/ketting.php#hielket38)、[#hielket42](http://wandelkoers.nl/damkoers/ketting.php#hielket42) |
+| ~~活门打击（coup de la trappe）~~ | ❓ 已删除 | 找不到它与链子锁相关的出处。Dubois 只在 [p.16](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=16) 把它当一般打击介绍（Valluikslag） |
+| 补充：五子链子锁局面 W:W28,31,32,33,37:B12,16,17,18,22 | ✅ 引擎✅ | [Damkompas #vast](http://wandelkoers.nl/damkoers/vastzetten.php#vast) |
+| 补充练习：“Wit houdt met de schijven 31, 33, 27 en 28 acht zwarte schijven vast”（白方用 4 子困住黑方 8 子） | ✅ | [DC Zaanstreek 练习 PDF](https://dczaanstreek.nl/files/Roozenburg%20diploma%20opdracht%208.pdf) |
+| 练习 | — | [C1 p.118](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=118) |
+
+### 4. 右翼锁 / 短翼锁
+
+| 要点 | 状态 | 依据 |
+|---|---|---|
+| 例：白方短翼被锁，走 34-29 就丢两子，中路和左翼也没有空间 | ✅ | [C1 p.108](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=108) |
+| 旧版所写子力“黑方 24/25 等子锁住白方 30/35/40/45” | ⚠️ | 从图上读出，文字中无法核实，以原图为准 |
+| 布子细节：49-44 比 49-43 灵活；要发挥锁的作用，39 号格最好空着 | ✅ | [C1 p.120](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=120) |
+| 反例：锁方用 6 个子锁 5 个子时，反而有利于被锁方 | ✅ | [C1 p.120](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=120) |
+| 短翼锁对局往往组合很多，如箭形打击，双方都要算清 | ✅ | [C1 p.121](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=121) |
+| 补充：三个子锁五个子的实例 W:W18,31,32,42,48:B6,8,11,16,21 | ✅ | [Damkompas #vast](http://wandelkoers.nl/damkoers/vastzetten.php#vast) |
+| 练习与进阶 | — | 练习 [C1 p.122](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=122)；进阶 [C3 Strategy p.9](https://www.fmjd.org/downloads/Course/en/Course%203/S3.Strategy.pdf#page=9) |
+
+### 5. 左翼锁 / 长翼锁
+
+| 要点 | 状态 | 依据 |
+|---|---|---|
+| 白方 25、29 两子锁住黑方左翼。Sijbrands 少一子仍然获胜（“hopeless in spite of one piece more”） | ✅ | [C1 p.110](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=110) |
+| W:W25,34,35,39,43:B14,15,19,20,24：白方 3 个子控制黑方 5 个子 | ✅ 引擎✅ | [Damkompas #vast](http://wandelkoers.nl/damkoers/vastzetten.php#vast)；[摆局](https://lidraughts.org/editor/W:W25,34,35,39,43:B14,15,19,20,24) |
+| 更多实例 | — | [Damkompas #prinlvo](http://wandelkoers.nl/damkoers/opsluiting.php#prinlvo) |
+
+### 6. 其他锁
+
+| 要点 | 状态 | 依据 |
+|---|---|---|
+| **箭形锁**：黑方 16/21/26 锁住白方 27/31/32/36/37，于是黑方在另一侧多子 | ✅ | [C1 p.110](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=110) |
+| 被锁方可弃子解锁：2.28-23! 19x28 3.32x23… | ✅ | [C1 p.110](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=110) |
+| 锁方的正确冻结手法是 1…14-20! | ✅ | [C1 p.110](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=110)、[p.102](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=102) |
+| 镜像箭形锁：白 16/21/26 锁黑 1/7/11/12/17，锁不是绝对的，锁方要防止黑方 17 号子走 17-22 逃出（如白走 1.44-39 就会放出 17-22） | ⚠️ 旧版张冠李戴到上一例 | [C1 p.110](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=110) |
+| 箭形锁大师实例：Gantwarg–Virny（4 锁 5，经济锁）、Ham–Raichenbach（5 锁 5，非经济锁） | ✅ | [C2 Judging positions p.15–17](https://www.fmjd.org/downloads/Course/en/Course%202/S1.Judging%20positions(c).pdf#page=15) |
+| **盖斯特姆锁**：对黑方 16/21/26 编队走 28-22，抢到空间、夺走黑方几步着数；此后黑方 12 号子不能再走 | ✅ | [C1 p.98](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=98) |
+| 盖斯特姆锁专课（Ghestem–Raichenbach、“sortie Ghestem”） | ✅ | [C2 Classics 第4课 p.22–27](https://www.fmjd.org/downloads/Course/en/Course%202/S3.Classics(c).pdf#page=22) |
+| 盖斯特姆锁实例 31.28-22! | ✅ | [C3 Strategy p.10](https://www.fmjd.org/downloads/Course/en/Course%203/S3.Strategy.pdf#page=10) |
+| **三叶草锁**：白 25/30/35/48 对黑 14/19/20/24，黑先走必败（“Zwart is aan zet en verliest”） | ✅ 引擎✅（子力已更正） | [Damkompas #kla](http://wandelkoers.nl/damkoers/opsluiting.php#kla) |
+
+## 五、分析方法：判断一把锁的七项检查〔归纳〕
+
+| 检查项 | 内容 | 依据 |
+|---|---|---|
+| 1 数子 | 被锁子数减去锁方用子数，即净节省的子数；≤0 时要警惕（经济锁） | [C2 p.15](https://www.fmjd.org/downloads/Course/en/Course%202/S1.Judging%20positions(c).pdf#page=15)；[Dubois p.53–54](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=53) |
+| 2 另一翼 | 锁方能否在另一侧兑子、形成多子 | [C1 p.114](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=114) |
+| 3 中心 | 谁控制 22/23/27/28 号格；被锁方能否建立坚固中心 | [Dubois p.62](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=62)；[C1 p.114](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=114) |
+| 4 破锁点 | 对方有没有突破编队（10/14/19、15/20/24）；我方是否留下可供突破的子（如 29）或空格（如 38） | [C1 p.109](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=109)、[p.116](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=116)；[Dubois p.56](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=56)、[p.64](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=64) |
+| 5 战术校验 | 对方每种破锁走法、我方每步等着，都过一遍组合清单 | 见表下清单 |
+| 6 着数计算 | 数双方剩几步自由着。抢到最后一着未必能赢，对方可能弃子解围 | [C1 p.96–99](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=96)、[p.110](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=110) |
+| 7 定性 | 绝对锁、部分锁还是战术锁；长期优势还是临时优势 | 〔归纳〕 |
+
+**第 5 项组合清单**
+
+| 组合 | 依据 |
+|---|---|
+| Philippe 打击 | [C1 p.11](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=11) |
+| 功夫打击 | [C1 p.20](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=20) |
+| 乒乓打击 | [C1 p.23](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=23) |
+| 炸弹打击 | [C1 p.26](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=26) |
+| 拿破仑打击 | [C1 p.33](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=33)；31x04 练习见 [Dubois p.65](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=65) |
+| Raphaël 打击 | [Dubois p.47](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=47) |
+| chassé-croisé | [Damkompas #prakhektype](http://wandelkoers.nl/damkoers/hekstelling.php#prakhektype) |
+| 脚跟打击（hielslag） | [Damkompas #prakkethiel](http://wandelkoers.nl/damkoers/ketting.php#prakkethiel) |
+
+## 六、使用方法：锁方六步流程〔归纳〕
+
+| 步骤 | 内容 | 依据 |
+|---|---|---|
+| 1 选目标 | 对方没有出动的一翼，或 22 号子背后堆着的子群 | [Dubois p.61](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=61) |
+| 2 最少子力上锁 | 栅栏阵 4 子、半叉 3 子、链子锁 4 子；力求经济锁 | [C2 p.15](https://www.fmjd.org/downloads/Course/en/Course%202/S1.Judging%20positions(c).pdf#page=15) |
+| 3 封住逃路 | Gantwarg–Andreiko：“White should have closed square 38 (42-38 or 43-38)”（白方本应先封住 38 号格）（引擎✅） | [C1 p.109](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=109) |
+| 4 转移战场 | 在另一翼兑子、建立多子优势，如 1.29-24! | [C1 p.109](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=109) |
+| 5 耗尽着数 | 占 25 号格、等着，直到对方冻结 | [Dubois p.54](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=54) |
+| 6 战术收官 | 让对方每一步都遭组合打击，同时防范对方反击 | [Dubois p.34](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=34)；[C1 p.128](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=128) |
+
+## 七、破解方法：被锁方的八种手段
+
+| 手段 | 内容 | 依据 |
+|---|---|---|
+| 1 预防 | 开局别随手走出被锁结构（如链子锁陷阱里的 20-24），尽量向中心出子（12-18、7-12） | [C1 p.116](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=116)；[Dubois p.53](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=53) |
+| 2 及时逃出 | 趁安全时兑子出锁（如 19-23 28x19 14x23），但要估算出锁后的局面代价 | [C1 p.108](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=108)；[Dubois p.53](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=53) |
+| 3 建立突破编队 | 10/14/19 拔 28 号子，15/20/24 压 33 号子 | [C1 p.116](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=116)；[Dubois p.56](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=56) |
+| 4 从后方攻击锁子 | 用 17-21 打半叉的 27 号子 | [Damkompas #halfhekalg](http://wandelkoers.nl/damkoers/halfhek.php#halfhekalg) |
+| 5 弃子解锁 | 箭形锁的 28-23!；栅栏阵中弃 16 号子 | [C1 p.110](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=110)；[Dubois p.61](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=61) |
+| 6 以中心对抗，再找摧毁打击 | 被叉子锁的一方通常先建坚固中心 | [C1 p.114](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=114) |
+| 7 反锁 | 破开对方链条，同时锁住对方 | [C1 p.117](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=117) |
+| 8 利用对方投入过多 | 锁方用子多于被锁子数时，在别处制造多打少 | [C1 p.120](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=120)；[Dubois p.54](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=54)；[C2 p.15](https://www.fmjd.org/downloads/Course/en/Course%202/S1.Judging%20positions(c).pdf#page=15) |
+
+## 八、学习路径（按顺序推进）
+
+| 阶段 | 学什么 | 精确材料 | 练习与答案 | 检验标准 |
+|---|---|---|---|---|
+| 0 打基础 | 记谱法、各类打击、强制手段、编队 | [C1 p.5](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=5)–95（第1–23课）；编队 [p.92](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=92) | 答案 [p.36](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=36)、[p.80](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=80) | 能迅速认出各类打击 |
+| 1 理解冻结 | 冻结、战术冻结、利用弱点（第24–26课） | [C1 p.96](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=96)–107 | 答案 [p.123–126](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=123) | 能数清双方着数 |
+| 2 认识锁 | 锁的分类（第27课） | [C1 p.108–110](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=108) | 练习 [p.111](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=111)；答案 [p.125](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=125) | 看图能说出锁型 |
+| 3 专项训练 | 叉子锁 / 链子锁 / 右翼锁 / 其他锁（第28–31课） | [p.112](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=112)、[p.116](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=116)、[p.119](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=119)、[p.127](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=127) | 练习 [p.115](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=115)、[p.118](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=118)、[p.122](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=122)、[p.130](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=130)；答案 [p.125–126](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=125)、[p.164](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=164) | 能讲清锁方计划与破锁手段 |
+| 3.5 锁的评估 | 经济锁、盖斯特姆锁 | [C2 Judging p.15–17](https://www.fmjd.org/downloads/Course/en/Course%202/S1.Judging%20positions(c).pdf#page=15)；[C2 Classics p.22–27](https://www.fmjd.org/downloads/Course/en/Course%202/S3.Classics(c).pdf#page=22) | — | 能判断一把锁是否经济 |
+| 4 深化战略 | 链子锁、栅栏阵的攻防计划 | [Dubois p.53–57](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=53)（链子锁）；[p.61–65](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf#page=61)（栅栏阵） | p.65 拿破仑打击练习 | 能复述双方各两个计划 |
+| 4.5 高级战略 | 半叉、叉子锁、未完成叉、右翼锁 | [C3 Strategy p.2](https://www.fmjd.org/downloads/Course/en/Course%203/S3.Strategy.pdf#page=2)、[p.5](https://www.fmjd.org/downloads/Course/en/Course%203/S3.Strategy.pdf#page=5)、[p.9](https://www.fmjd.org/downloads/Course/en/Course%203/S3.Strategy.pdf#page=9)、[p.10](https://www.fmjd.org/downloads/Course/en/Course%203/S3.Strategy.pdf#page=10) | — | 能区分叉子锁的完整与不完整形态 |
+| 5 实战案例 | 按锁型分类的大师对局片段 | 见表下 | FEN 拼到 `https://lidraughts.org/editor/<FEN>` 即可摆局 | 每类做 10 例以上 |
+| 6 开局理论 | 栅栏阵开局 | [Gantwarg 专栏](http://gantwarg.net/dammen/Hekstelling/index.htm)；[WCDA 文章](http://www.gantwarg.net/dammen/Hekstelling/Hekstelling_Wcda_jubileum.htm)（de Vries–Luteijn 2000）；[C3 Opening p.18–29](https://www.fmjd.org/downloads/Course/en/Course%203/S2.The%20opening%20of%20the%20game.pdf#page=18) | — | 能用一套锁型开局实战 |
+| 7 残局延伸 | 王对兵、斜线封锁 | [C1 第34课 p.137–141](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=137)；[Damkompas #sleublok1](http://wandelkoers.nl/damkoers/sleutel.php#sleublok1) | 答案 [p.164–166](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf#page=164) | 能完成封锁取胜 |
+
+**第 5 阶段案例入口（Damkompas）**
+
+| 锁型 | 链接 |
+|---|---|
+| 栅栏阵 | [#prakhektype](http://wandelkoers.nl/damkoers/hekstelling.php#prakhektype) |
+| 半叉 | [#prakhalf1627](http://wandelkoers.nl/damkoers/halfhek.php#prakhalf1627) |
+| 链子锁 | [#prakkethiel](http://wandelkoers.nl/damkoers/ketting.php#prakkethiel) |
+| 短翼锁 | [#kvo](http://wandelkoers.nl/damkoers/opsluiting.php#kvo) |
+| 长翼锁 | [#lvo](http://wandelkoers.nl/damkoers/opsluiting.php#lvo) |
+| 三叶草锁 | [#kla](http://wandelkoers.nl/damkoers/opsluiting.php#kla) |
+
+**复盘三问**：这局有没有出现锁？按第五节七项检查，锁方是否真的划算？双方各自错过了哪个使用或破解的时机？
+
+**视频参考（❓ 内容未看过）**
+
+- 未找到《国际跳棋教程Ⅰ》第27–31课的对应视频。[BV1exxM6mEDz](https://www.bilibili.com/video/BV1exxM6mEDz/) 只是该系列入口，不是讲锁的那几课。
+- B 站相关视频：
+  - [【国际跳棋】17、锁链](https://www.bilibili.com/video/BV1D7411M7X1/)
+  - [有效兵链与无效兵链（田晟宬）](https://www.bilibili.com/video/BV1ky4y1a7q1/)
+  - [【国际跳棋】15、叉子](https://www.bilibili.com/video/BV1o7411F7c6/)：可能讲的是战术“双打”，不一定是叉子锁
+
+## 九、勘误汇总（相对初版）
+
+1. 俄语术语来自 64 格俄式跳棋大纲；“зажим короткого / длинного фланга”无出处，已删除。
+2. 三叶草锁白子应为 25/30/35/48。
+3. 叉子锁基础组合补上强制吃子 33x22 17x28。
+4. “17 号子必须留在原位”属于镜像箭形锁（白 16/21/26 锁黑 1/7/11/12/17）。
+5. 31-26 22x31、27-21 17x37 出自 Damkompas 半叉页，非栅栏阵页。
+6. “19-23 遭 25-20!”出自 C1 p.116/108，非 Dubois。
+7. Dubois 页码范围应为 PDF 第 53–65 页（初版写作“53–68 页”）。
+8. “Sijbrands–Andreiko 1973”应为“Sijbrands 关于 1973 年对 Andreiko 比赛的著作”，不是一盘对局。
+9. “活门打击”与链子锁的关联无出处，已删除。
+10. 右翼锁例子的子力清单无法从文字核实。
+11. 第五、六节及“锁分三类”的分类法属作者归纳，已标注并配依据。
+12. “46–5 斜线属于长翼”不严谨，已删除。
+
+**无法访问或未读取的来源**（只留档，未作依据）：nl.wikipedia、infourok（401）、dejuistezet 的 damcursus2.pdf（下载不完整）。
+
+## Sources
+
+- [FMJD – Course in draughts（《国际跳棋教程Ⅰ》）](https://www.fmjd.org/downloads/Course/en/Course%20in%20draughts.pdf)
+- FMJD Course II：[S1 Judging positions](https://www.fmjd.org/downloads/Course/en/Course%202/S1.Judging%20positions(c).pdf) / [S2 Centre play](https://www.fmjd.org/downloads/Course/en/Course%202/S2.%20Centre%20play(c).pdf) / [S3 Classics](https://www.fmjd.org/downloads/Course/en/Course%202/S3.Classics(c).pdf)
+- FMJD Course III：[S2 The opening of the game](https://www.fmjd.org/downloads/Course/en/Course%203/S2.The%20opening%20of%20the%20game.pdf) / [S3 Strategy](https://www.fmjd.org/downloads/Course/en/Course%203/S3.Strategy.pdf)
+- [J.-P. Dubois – Dammen in de praktijk](https://www.fmjd.org/promo/dubois-p/downloads/Pratique_NL.pdf)
+- Damkompas：[Vastzetten](http://wandelkoers.nl/damkoers/vastzetten.php) / [Hekstelling](http://wandelkoers.nl/damkoers/hekstelling.php) / [Halve hekstelling](http://wandelkoers.nl/damkoers/halfhek.php) / [Kettingstelling](http://wandelkoers.nl/damkoers/ketting.php) / [Opsluitingen](http://wandelkoers.nl/damkoers/opsluiting.php) / [Sleutelstellingen](http://wandelkoers.nl/damkoers/sleutel.php)
+- Gantwarg：[Hekstelling 专栏](http://gantwarg.net/dammen/Hekstelling/index.htm) / [WCDA 文章](http://www.gantwarg.net/dammen/Hekstelling/Hekstelling_Wcda_jubileum.htm)
+- [DC Zaanstreek – Kettingstelling 练习](https://dczaanstreek.nl/files/Roozenburg%20diploma%20opdracht%208.pdf)
+- [Калуга 跳棋学校大纲](http://shashki.kaluga.ru/about/1387)
+- [百度百科 – 国际跳棋教程Ⅰ](https://baike.baidu.com/item/%E5%9B%BD%E9%99%85%E8%B7%B3%E6%A3%8B%E6%95%99%E7%A8%8B%E2%85%A0/12069564)
+- [lidraughts 摆局编辑器示例](https://lidraughts.org/editor/B:W26,27,31,36:B16,18,22)
+- Bilibili：[【国际跳棋教程Ⅰ】系列](https://www.bilibili.com/video/BV1exxM6mEDz/) / [17、锁链](https://www.bilibili.com/video/BV1D7411M7X1/) / [有效兵链与无效兵链](https://www.bilibili.com/video/BV1ky4y1a7q1/) / [15、叉子](https://www.bilibili.com/video/BV1o7411F7c6/)
+- 未能访问（留档）：[nl.wikipedia – Hekstelling](https://nl.wikipedia.org/wiki/Hekstelling) / [infourok 大纲](https://infourok.ru/programma-dlya-slepih-i-slabovidyaschih-detey-i-vzroslih-shashki-2687482.html) / [De juiste zet – damcursus2.pdf](https://dejuistezet.be/archief/damcursus2.pdf)
